@@ -13,8 +13,9 @@ class KodoSessionStorage extends LocalStorage {
   Future<void> initialize() async {
     const probe = 'kodo-tasks.storage-check';
     await storage.write(key: probe, value: 'ok');
-    if (await storage.read(key: probe) != 'ok')
+    if (await storage.read(key: probe) != 'ok') {
       throw StateError('Klíčenka není dostupná.');
+    }
     await storage.delete(key: probe);
   }
 

@@ -12,6 +12,8 @@ class ControlledTasks extends TodoController {
   Completer<Todos> get save => _save ??= Completer<Todos>();
   int attempts = 0;
   @override
+  // This fixture replaces repository startup; it never opens a database.
+  // ignore: must_call_super
   void onInit() {}
   @override
   Future<Todos> addTodo({
