@@ -6,6 +6,7 @@ import 'package:isar_community/isar.dart';
 import 'package:zest/app/data/db.dart';
 import 'package:zest/main.dart';
 import 'package:zest/app/ui/todos/widgets/todos_action.dart';
+import 'package:zest/app/controller/todo_controller.dart';
 
 /// Only text/HTTP(S) URLs are accepted. Receiving a URL never writes a task:
 /// the user confirms it in Zest's original task editor.
@@ -78,6 +79,7 @@ class _KodoShareReceiverState extends State<KodoShareReceiver> {
         .where((t) => t.remoteKey == 'inbox')
         .firstOrNull;
     if (group != null && mounted) {
+      if (!Get.isRegistered<TodoController>()) Get.put(TodoController());
       final payload = pending.removeAt(0);
       await showModalBottomSheet<void>(
         context: context,

@@ -5,8 +5,8 @@ import 'package:zest/main.dart';
 import 'package:get/get.dart';
 
 class NotificationShow {
-  final String _channelId = 'Zest';
-  final String _channelName = 'DARK NIGHT';
+  final String _channelId = 'kodo_tasks';
+  final String _channelName = 'Kodo Úkoly';
 
   static const String actionIdMarkDone = 'mark_done';
   static const String actionIdSnooze = 'snooze';

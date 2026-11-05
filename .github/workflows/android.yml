@@ -49,7 +49,7 @@ jobs:
           mkdir -p android-artifact
           find build/app/outputs -name '*.apk' -type f -exec cp '{}' android-artifact/ \;
           find "$ANDROID_HOME/build-tools" -name apksigner.jar -type f | sort -V | tail -1 | xargs -I '{}' cp '{}' android-artifact/apksigner.jar
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: kodo-ukoly-android-unsigned
           path: android-artifact/

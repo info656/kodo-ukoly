@@ -44,3 +44,11 @@ node tests/database.mjs
 ```
 
 The database tests run against local in-memory PGlite with synthetic identities and data, never against the connected project. Set `PGLITE_MODULE` to an installed PGlite module. Fixtures use the existing task RPC definitions read on 2026-11-05. The test runner needs no Supabase credentials. Tests cover source CRUD, idempotency, stale versions, parent cycles/cross-client parents, soft trash, admin/frozen/session checks and table/API grants. A live anonymous HTTP check verifies both production RPCs reject access. A full live authenticated round trip still requires the owner's normal login/MFA; do not manufacture claims or reuse another app's session to test it.
+
+## Android is the primary target (Pava clarified 2026-11-05)
+
+GitHub Actions builds a universal release APK on Ubuntu with the official pinned Flutter SDK and Java 17. Only the public Supabase client URL and publishable key are repository build variables. No account session, customer data, signing identity or service-role credential is uploaded. The build artifact is unsigned and retained for seven days. Signing and verification happen locally with Android's official `apksigner.jar` from the runner's installed SDK, after explicit authorization to create or use an app signing identity.
+
+Planned private signing location: `/Users/pava/.codex/app-signing/kodo-ukoly/`, outside this repository. Creation is pending the owner's explicit approval; it must not be substituted with an ephemeral CI/debug identity. Preserve the approved key for future upgrades and make an authorized encrypted backup. Neither its password nor private key belong in GitHub, logs, notes or chat. Planned final artifact filename: `outputs/Kodo-Ukoly-0.1.0.apk`.
+
+Android requires Internet access, accepts `ACTION_SEND text/plain` both at cold launch and while running, and queues pre-login share input only in memory. Login uses Android encrypted secure storage, OS backup is disabled, and no file sharing/upload is enabled. Physical phone login and sharing must be verified with the owner's account; do not claim a real phone was tested from the Mac build or Flutter unit tests.
