@@ -6,7 +6,7 @@ Keep the original Zest task screens, colors and layout. The extra entry points a
 
 ## Source of truth
 
-`client_tasks` and `task_inbox` in the existing Kodo Supabase project. Clients are existing organizations; Inbox is the unassigned inbox. The two guarded RPCs `kodo_tasks_app_read` and `kodo_tasks_app_write` require an existing, active Kodo admin session, including the portal MFA guard. No service-role credential is in the application.
+`client_tasks` and `task_inbox` in the existing Kodo Supabase project. Clients are existing organizations; Inbox is the unassigned inbox. Production migration: `20261105103512_kodo_tasks_app` (local SQL file is the reviewed source). The two guarded RPCs `kodo_tasks_app_read` and `kodo_tasks_app_write` require an existing, active Kodo admin session, including the portal MFA guard. No service-role credential is in the application.
 
 `kodo_task_app_metadata` stores only owner-specific Zest display settings (order, colors, due dates, priority, tags and subtask relationships). It is not a second set of business tasks. It has no direct authenticated table grants. Each write checks a version of its source record and metadata, so a stale editor cannot overwrite a change from the portal silently. Deletes use the portal's existing soft-trash functions. App writes do not invoke the portal email-sending APIs.
 

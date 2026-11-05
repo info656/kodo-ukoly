@@ -140,15 +140,20 @@ class _TodosActionState extends State<TodosAction>
   }
 
   void _initializeEditingController() {
+    final shared = !widget.edit && widget.initialDescription != null;
     _editingController = _EditingController(
-      _titleController.text,
-      _descController.text,
+      shared ? '' : _titleController.text,
+      shared ? '' : _descController.text,
       _timeController.text,
       _todoPinned,
       _selectedTask,
       _todoPriority,
       _todoTags,
     );
+    if (shared) {
+      _editingController.title.value = _titleController.text;
+      _editingController.description.value = _descController.text;
+    }
   }
 
   void _initAnimations() {
@@ -318,8 +323,7 @@ class _TodosActionState extends State<TodosAction>
 
     final saved = await _saveTodo();
     if (!saved) return;
-    _clearControllers();
-    NavigationHelper.back();
+    if (mounted) Navigator.of(context).pop();
   }
 
   bool _saving = false;

@@ -41,13 +41,21 @@ jobs:
       - name: Analyze and test link sharing
         run: |
           flutter analyze --no-pub --no-fatal-infos
-          flutter test test/sharing_test.dart
+          flutter test
       - name: Build unsigned release APK
         run: flutter build apk --release --dart-define-from-file=.local/build-config.json --build-name=0.1.0 --build-number=1
       - name: Collect Android package
         run: |
           mkdir -p android-artifact
           find build/app/outputs -name '*.apk' -type f -exec cp '{}' android-artifact/ \;
+          APK_PATH=$(find build/app/outputs/flutter-apk -name '*.apk' -type f | head -1)
+          AAPT_PATH=$(find "$ANDROID_HOME/build-tools" -name aapt2 -type f | sort -V | tail -1)
+          "$AAPT_PATH" dump badging "$APK_PATH" > android-artifact/package-info.txt
+          "$AAPT_PATH" dump xmltree "$APK_PATH" --file AndroidManifest.xml > android-artifact/manifest-info.txt
+          grep "package: name='cz.kodo.ukoly'" android-artifact/package-info.txt
+          grep 'android.permission.INTERNET' android-artifact/package-info.txt
+          grep 'android.intent.action.SEND' android-artifact/manifest-info.txt
+          sha256sum "$APK_PATH" > android-artifact/package-sha256.txt
           find "$ANDROID_HOME/build-tools" -name apksigner.jar -type f | sort -V | tail -1 | xargs -I '{}' cp '{}' android-artifact/apksigner.jar
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
