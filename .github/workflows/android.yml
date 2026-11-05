@@ -1,0 +1,57 @@
+name: Android APK
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/kodo-online]
+permissions:
+  contents: read
+jobs:
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-java@cf277c60eb25467037889841efdb72551f06f6c3
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Official Flutter SDK
+        run: |
+          git clone --depth 1 --branch 3.44.1 https://github.com/flutter/flutter.git "$RUNNER_TEMP/flutter"
+          test "$(git -C "$RUNNER_TEMP/flutter" rev-parse HEAD)" = 924134a44c189315be2148659913dda1671cbe99
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Public client configuration
+        env:
+          CLIENT_URL: ${{ vars.KODO_SUPABASE_URL }}
+          CLIENT_KEY: ${{ vars.KODO_SUPABASE_KEY }}
+        run: |
+          mkdir -p .local
+          python3 - <<'PY'
+          import os,json
+          assert os.environ['CLIENT_URL'].startswith('https://')
+          assert os.environ['CLIENT_KEY'].startswith('sb_publishable_')
+          with open('.local/build-config.json','w') as f:
+            json.dump({'KODO_SUPABASE_URL':os.environ['CLIENT_URL'],'KODO_SUPABASE_KEY':os.environ['CLIENT_KEY']},f)
+          PY
+      - name: Resolve dependencies
+        env:
+          CI: 'true'
+          FLUTTER_SUPPRESS_ANALYTICS: 'true'
+        run: flutter pub get
+      - name: Analyze and test link sharing
+        run: |
+          flutter analyze --no-pub --no-fatal-infos
+          flutter test test/sharing_test.dart
+      - name: Build unsigned release APK
+        run: flutter build apk --release --dart-define-from-file=.local/build-config.json --build-name=0.1.0 --build-number=1
+      - name: Collect Android package
+        run: |
+          mkdir -p android-artifact
+          find build/app/outputs -name '*.apk' -type f -exec cp '{}' android-artifact/ \;
+          find "$ANDROID_HOME/build-tools" -name apksigner.jar -type f | sort -V | tail -1 | xargs -I '{}' cp '{}' android-artifact/apksigner.jar
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kodo-ukoly-android-unsigned
+          path: android-artifact/
+          retention-days: 7
+          if-no-files-found: error

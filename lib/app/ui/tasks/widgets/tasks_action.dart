@@ -1,6 +1,7 @@
 // app/ui/tasks/widgets/tasks_action.dart
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:zest/kodo/session.dart';
 import 'package:get/get.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:flex_color_picker/flex_color_picker.dart';
@@ -128,23 +129,32 @@ class _TasksActionState extends State<TasksAction>
     }
   }
 
-  void _onSavePressed() {
-    if (!_formKey.currentState!.validate()) return;
+  bool _saving = false;
+  Future<void> _onSavePressed() async {
+    if (_saving) return;
+    _saving = true;
+    try {
+      if (!_formKey.currentState!.validate()) return;
 
-    TextUtils.trimController(_titleController);
-    TextUtils.trimController(_descController);
+      TextUtils.trimController(_titleController);
+      TextUtils.trimController(_descController);
 
-    if (widget.edit) {
-      _updateTask();
-    } else {
-      _addTask();
+      if (widget.edit) {
+        await _updateTask();
+      } else {
+        await _addTask();
+      }
+
+      NavigationHelper.back();
+    } catch (e) {
+      Get.snackbar("Kodo Úkoly", readableKodoError(e));
+    } finally {
+      _saving = false;
     }
-
-    NavigationHelper.back();
   }
 
-  void _updateTask() {
-    _todoController.updateTask(
+  Future<void> _updateTask() async {
+    await _todoController.updateTask(
       widget.task!,
       _titleController.text,
       _descController.text,
@@ -153,8 +163,8 @@ class _TasksActionState extends State<TasksAction>
     widget.updateTaskName?.call();
   }
 
-  void _addTask() {
-    _todoController.addTask(
+  Future<void> _addTask() async {
+    await _todoController.addTask(
       _titleController.text,
       _descController.text,
       _colorNotifier.value,

@@ -1,14 +1,14 @@
 import 'package:flutter/foundation.dart';
+import 'package:zest/kodo/session.dart';
+import 'package:zest/kodo/store.dart';
+import 'package:zest/kodo/sharing.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 import 'package:zest/app/controller/isar_controller.dart';
-import 'package:zest/app/services/auto_backup_service.dart';
 import 'package:zest/app/ui/home.dart';
 import 'package:zest/app/ui/onboarding.dart';
 import 'package:zest/app/ui/tasks/widgets/tasks_action.dart';
 import 'package:zest/app/ui/todos/view/calendar_todos.dart';
-import 'package:zest/app/utils/default_category.dart';
 import 'package:zest/app/utils/snackbar_overlay.dart';
 import 'package:zest/theme/theme.dart';
 import 'package:flutter/material.dart';
@@ -20,7 +20,6 @@ import 'package:zest/app/controller/theme_controller.dart';
 import 'package:zest/app/utils/device_info.dart';
 import 'app/data/db.dart';
 import 'app/ui/todos/view/all_todos.dart';
-import 'app/utils/notification.dart';
 import 'translation/translation.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -66,8 +65,8 @@ List<String> allScreens = [];
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await initializeApp();
+  await initializeKodoSession();
   runApp(const MyApp());
-  Future.microtask(() => seedDefaultCategoryOnce());
 }
 
 Future<void> initializeApp() async {
@@ -83,7 +82,7 @@ Future<void> initializeApp() async {
   await IsarController.openDB();
   await initSettings();
 
-  Future.microtask(() => AutoBackupService.checkAndPerformAutoBackup());
+  // The server is authoritative; local backup restore is not a sync mechanism.
 
   await PlatformFeatures.setScreenPrivacy(settings.screenPrivacy ?? false);
 
@@ -111,9 +110,9 @@ Future<void> initializeNotifications() async {
 
   const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
   const iosSettings = DarwinInitializationSettings(
-    requestAlertPermission: true,
-    requestBadgePermission: true,
-    requestSoundPermission: true,
+    requestAlertPermission: false,
+    requestBadgePermission: false,
+    requestSoundPermission: false,
   );
   const linuxSettings = LinuxInitializationSettings(
     defaultActionName: 'Open notification',
@@ -173,84 +172,21 @@ Future<void> handleNotificationResponse(NotificationResponse response) async {
 }
 
 Future<void> snoozeTodo(int todoId) async {
-  try {
-    final isarInstance = await _getIsarInstance();
-    if (isarInstance == null) return;
-    final settings =
-        await isarInstance.settings.where().findFirst() ?? Settings();
-
-    final todo = await isarInstance.todos.get(todoId);
-    if (todo == null) return;
-
-    final title = todo.name;
-    final body = todo.description;
-
-    final translations = Translation().keys;
-    final localeCode = settings.language ?? 'en_US';
-    final langMap = translations[localeCode] ?? translations['en_US']!;
-
-    String translate(String key) => langMap[key] ?? key;
-
-    final snoozeText =
-        '${translate('snooze')} ${settings.snoozeDuration} ${translate('min')}';
-    final markDoneText = translate('markAsDone');
-
-    await NotificationShow().snoozeNotification(
-      todoId,
-      title,
-      body,
-      snoozeActionText: snoozeText,
-      markDoneActionText: markDoneText,
-    );
-
-    await isarInstance.writeTxn(() async {
-      todo.todoCompletedTime = DateTime.now().add(
-        Duration(minutes: settings.snoozeDuration),
-      );
-      await isarInstance.todos.put(todo);
-    });
-
-    await isarInstance.close();
-  } catch (e) {
-    debugPrint('Error snoozing todo: $e');
-  }
+  if (!KodoStore.instance.ready) return;
+  final todo = await isar.todos.get(todoId);
+  if (todo == null) return;
+  todo.todoCompletedTime = DateTime.now().add(
+    Duration(minutes: settings.snoozeDuration),
+  );
+  await KodoStore.instance.saveTodo(todo);
 }
 
 Future<void> markTodoAsDone(int todoId) async {
-  try {
-    final isarInstance = await _getIsarInstance();
-    if (isarInstance == null) return;
-
-    final todo = await isarInstance.todos.get(todoId);
-    if (todo == null) return;
-
-    if (todo.status != TodoStatus.done) {
-      await isarInstance.writeTxn(() async {
-        todo.status = TodoStatus.done;
-        todo.todoCompletionTime = DateTime.now();
-        await isarInstance.todos.put(todo);
-      });
-      if (flutterLocalNotificationsPlugin != null) {
-        await flutterLocalNotificationsPlugin!.cancel(id: todoId);
-      }
-      await isarInstance.close();
-    }
-  } catch (e) {
-    debugPrint('Error marking todo as done: $e');
-  }
-}
-
-Future<Isar?> _getIsarInstance() async {
-  if (Isar.instanceNames.isEmpty) {
-    final dir = await getApplicationSupportDirectory();
-    return await Isar.open(
-      [TasksSchema, TodosSchema, SettingsSchema],
-      directory: dir.path,
-      inspector: true,
-    );
-  } else {
-    return Isar.getInstance();
-  }
+  if (!KodoStore.instance.ready) return;
+  final todo = await isar.todos.get(todoId);
+  if (todo == null) return;
+  todo.status = TodoStatus.done;
+  await KodoStore.instance.saveTodo(todo, fields: false);
 }
 
 Future<void> initSettings() async {
@@ -539,8 +475,14 @@ class _MyAppState extends State<MyApp> {
       fallbackLocale: const Locale('en', 'US'),
       supportedLocales: appLanguages.map((e) => e['locale'] as Locale).toList(),
       debugShowCheckedModeBanner: false,
-      home: settings.onboard ? HomePage(key: _homeKey) : const OnBoarding(),
-      title: 'Zest',
+      home: KodoSessionGate(
+        child: KodoShareReceiver(
+          child: settings.onboard
+              ? HomePage(key: _homeKey)
+              : const OnBoarding(),
+        ),
+      ),
+      title: 'Kodo Úkoly',
       builder: (context, child) {
         return Stack(children: [child!, const SnackBarOverlayWidget()]);
       },

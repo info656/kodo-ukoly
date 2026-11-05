@@ -1,0 +1,10 @@
+{
+  "name": "kodo-ukoly-database-tests",
+  "private": true,
+  "scripts": {
+    "test": "node tests/database.mjs"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.15"
+  }
+}

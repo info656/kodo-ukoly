@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:zest/kodo/session.dart';
+import 'package:zest/kodo/attachments.dart';
 import 'package:get/get.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:intl/intl.dart';
@@ -25,11 +27,14 @@ class TodosAction extends StatefulWidget {
     required this.category,
     this.task,
     this.todo,
+    this.initialTitle,
+    this.initialDescription,
   });
 
   final String text;
   final Tasks? task;
   final Todos? todo;
+  final String? initialTitle, initialDescription;
   final bool edit;
   final bool category;
 
@@ -112,8 +117,8 @@ class _TodosActionState extends State<TodosAction>
 
   void _initializeControllers() {
     _categoryController = TextEditingController();
-    _titleController = TextEditingController();
-    _descController = TextEditingController();
+    _titleController = TextEditingController(text: widget.initialTitle);
+    _descController = TextEditingController(text: widget.initialDescription);
     _timeController = TextEditingController();
     _tagsController = TextEditingController();
     _categoryFocusNode = FocusNode();
@@ -317,11 +322,21 @@ class _TodosActionState extends State<TodosAction>
     NavigationHelper.back();
   }
 
+  bool _saving = false;
   Future<bool> _saveTodo() async {
-    if (widget.edit) {
-      return _updateTodo();
-    } else {
-      return _createTodo();
+    if (_saving) return false;
+    _saving = true;
+    try {
+      if (widget.edit) {
+        return await _updateTodo();
+      } else {
+        return await _createTodo();
+      }
+    } catch (e) {
+      Get.snackbar('Kodo Úkoly', readableKodoError(e));
+      return false;
+    } finally {
+      _saving = false;
     }
   }
 
@@ -331,7 +346,7 @@ class _TodosActionState extends State<TodosAction>
       Get.snackbar('selectCategory'.tr, 'createCategoryFirstHint'.tr);
       return false;
     }
-    _todoController.updateTodo(
+    await _todoController.updateTodo(
       todo: widget.todo!,
       task: task,
       title: _titleController.text,
@@ -351,7 +366,7 @@ class _TodosActionState extends State<TodosAction>
         Get.snackbar('selectCategory'.tr, 'createCategoryFirstHint'.tr);
         return false;
       }
-      _todoController.addTodo(
+      await _todoController.addTodo(
         task: task,
         title: _titleController.text,
         description: _descController.text,
@@ -365,7 +380,7 @@ class _TodosActionState extends State<TodosAction>
       final parentTask = widget.todo!.task.value;
       if (parentTask == null) return false;
 
-      _todoController.addTodo(
+      await _todoController.addTodo(
         task: parentTask,
         title: _titleController.text,
         description: _descController.text,
@@ -377,7 +392,7 @@ class _TodosActionState extends State<TodosAction>
       );
       return true;
     } else if (widget.task != null) {
-      _todoController.addTodo(
+      await _todoController.addTodo(
         task: widget.task!,
         title: _titleController.text,
         description: _descController.text,
@@ -805,6 +820,8 @@ class _TodosActionState extends State<TodosAction>
           maxLine: null,
           onChanged: (value) => _editingController.description.value = value,
         ),
+        if (widget.edit && widget.todo != null)
+          KodoAttachmentLinks(todo: widget.todo!),
       ],
     );
   }

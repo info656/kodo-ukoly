@@ -1,5 +1,6 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'package:zest/app/data/repositories/todo_repository.dart';
 import 'package:get/get.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:reorderables/reorderables.dart';
@@ -334,12 +335,7 @@ class _TodosListState extends State<TodosList>
       }
     }
 
-    await isar.writeTxn(() async {
-      for (int i = 0; i < allTodos.length; i++) {
-        allTodos[i].index = i;
-        await isar.todos.put(allTodos[i]);
-      }
-    });
+    await TodoRepository().updateIndexes(allTodos);
 
     _todoController.todos.assignAll(allTodos);
     _todoController.todos.refresh();

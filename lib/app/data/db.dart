@@ -49,6 +49,8 @@ enum AutoBackupFrequency { daily, weekly, monthly }
 
 @collection
 class Tasks {
+  String? remoteKey;
+  String? remoteVersion;
   Id id;
   String title;
   String description;
@@ -76,6 +78,8 @@ class Tasks {
 
 @collection
 class Todos {
+  String? remoteKey;
+  String? remoteVersion;
   Id id;
   String name;
   String description;

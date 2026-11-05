@@ -1,6 +1,7 @@
 import 'package:isar_community/isar.dart';
 import 'package:zest/app/data/db.dart';
 import 'package:zest/main.dart';
+import 'package:zest/kodo/store.dart';
 
 class TodoRepository {
   final Isar _isar = isar;
@@ -18,30 +19,19 @@ class TodoRepository {
     required Tasks task,
     Todos? parent,
   }) async {
-    final todo = Todos(
-      name: name,
-      description: description,
-      todoCompletedTime: completedTime,
-      fix: fix,
-      createdTime: DateTime.now(),
-      priority: priority,
-      tags: tags,
-      index: index,
-    )..task.value = task;
-
-    if (parent != null) {
-      todo.parent.value = parent;
-    }
-
-    await _isar.writeTxn(() async {
-      await _isar.todos.put(todo);
-      await todo.task.save();
-      if (parent != null) {
-        await todo.parent.save();
-      }
-    });
-
-    return todo;
+    return KodoStore.instance.createTodo(
+      group: task,
+      title: name,
+      body: description,
+      metadata: {
+        'due': completedTime?.toUtc().toIso8601String(),
+        'pinned': fix,
+        'priority': priority.name,
+        'tags': tags,
+        'index': index,
+        'parent': parent?.remoteKey,
+      },
+    );
   }
 
   // ==================== READ ====================
@@ -72,49 +62,25 @@ class TodoRepository {
 
   // ==================== UPDATE ====================
 
-  Future<void> update(Todos todo) async {
-    await _isar.writeTxn(() => _isar.todos.put(todo));
-  }
-
+  Future<void> update(Todos todo) => KodoStore.instance.saveTodo(todo);
   Future<void> updateStatusWithSubtasks({
     required Todos parentTodo,
     required TodoStatus status,
   }) async {
-    final allIds = <int>{};
+    final ids = <int>{};
     final stack = <Todos>[parentTodo];
-
     while (stack.isNotEmpty) {
-      final current = stack.removeLast();
-      if (!allIds.add(current.id)) continue;
-
-      final children = await getChildren(current.id);
-      for (final child in children) {
-        if (!allIds.contains(child.id)) {
-          stack.add(child);
-        }
+      final t = stack.removeLast();
+      if (!ids.add(t.id)) continue;
+      stack.addAll(await getChildren(t.id));
+    }
+    for (final id in ids) {
+      final t = await getById(id);
+      if (t != null) {
+        t.status = status;
+        await KodoStore.instance.saveTodo(t, fields: false);
       }
     }
-
-    if (allIds.isEmpty) return;
-
-    final todos = <Todos>[];
-    for (final id in allIds) {
-      final todo = await _isar.todos.get(id);
-      if (todo != null) {
-        todos.add(todo);
-      }
-    }
-
-    if (todos.isEmpty) return;
-
-    final now = DateTime.now();
-    await _isar.writeTxn(() async {
-      for (final todo in todos) {
-        todo.status = status;
-        todo.todoCompletionTime = status.isCompleted ? now : null;
-      }
-      await _isar.todos.putAll(todos);
-    });
   }
 
   Future<void> updateFields({
@@ -127,54 +93,23 @@ class TodoRepository {
     required List<String> tags,
     required Tasks task,
   }) async {
-    await _isar.writeTxn(() async {
-      todo.name = name;
-      todo.description = description;
-      todo.todoCompletedTime = completedTime;
-      todo.fix = fix;
-      todo.priority = priority;
-      todo.tags = tags;
-      todo.task.value = task;
-      await _isar.todos.put(todo);
-      await todo.task.save();
-    });
+    todo.name = name;
+    todo.description = description;
+    todo.todoCompletedTime = completedTime;
+    todo.fix = fix;
+    todo.priority = priority;
+    todo.tags = tags;
+    await KodoStore.instance.saveTodo(todo, group: task);
   }
 
-  Future moveToTask({required Set todoIds, required Tasks task}) async {
-    if (todoIds.isEmpty) return;
-
-    final List<Todos> todos = [];
+  Future<void> moveToTask({required Set todoIds, required Tasks task}) async {
     for (final id in todoIds) {
-      final todo = await _isar.todos.get(id);
-      if (todo != null) {
-        todos.add(todo);
+      final t = await getById(id as int);
+      if (t != null) {
+        t.parent.value = null;
+        await KodoStore.instance.moveTodo(t, task);
       }
     }
-
-    if (todos.isEmpty) return;
-
-    for (final todo in todos) {
-      await todo.parent.load();
-    }
-
-    await _isar.writeTxn(() async {
-      for (final todo in todos) {
-        todo.task.value = task;
-
-        final parent = todo.parent.value;
-
-        if (parent != null && !todoIds.contains(parent.id)) {
-          todo.parent.value = null;
-        }
-      }
-
-      await _isar.todos.putAll(todos);
-
-      for (final todo in todos) {
-        await todo.task.save();
-        await todo.parent.save();
-      }
-    });
   }
 
   Future<void> moveToParent({
@@ -182,60 +117,40 @@ class TodoRepository {
     required Todos? newParent,
     required Tasks? newTask,
   }) async {
-    if (todoIds.isEmpty) return;
-
-    final todos = <Todos>[];
     for (final id in todoIds) {
-      final todo = await _isar.todos.get(id);
-      if (todo != null) {
-        todos.add(todo);
+      var t = await getById(id);
+      if (t == null) continue;
+      if (newTask != null && newTask.remoteKey != t.task.value?.remoteKey) {
+        t.parent.value = null;
+        await KodoStore.instance.moveTodo(t, newTask);
+        t = await getById(id);
+      }
+      if (t != null) {
+        t.parent.value = newParent;
+        await update(t);
       }
     }
-
-    if (todos.isEmpty) return;
-
-    await _isar.writeTxn(() async {
-      for (final todo in todos) {
-        todo.parent.value = newParent;
-        if (newTask != null) {
-          todo.task.value = newTask;
-        }
-      }
-
-      await _isar.todos.putAll(todos);
-
-      for (final todo in todos) {
-        await todo.task.save();
-        if (todo.parent.value != null) {
-          await todo.parent.save();
-        }
-      }
-    });
   }
 
   Future<void> updateIndexes(List<Todos> todos) async {
-    if (todos.isEmpty) return;
-
-    await _isar.writeTxn(() async {
-      for (int i = 0; i < todos.length; i++) {
-        todos[i].index = i;
+    for (var i = 0; i < todos.length; i++) {
+      final t = await getById(todos[i].id);
+      if (t != null) {
+        t.index = i;
+        await update(t);
       }
-      await _isar.todos.putAll(todos);
-    });
+    }
   }
 
-  // ==================== DELETE ====================
-
   Future<void> delete(int id) async {
-    await _isar.writeTxn(() => _isar.todos.delete(id));
+    final t = await getById(id);
+    if (t != null) await KodoStore.instance.removeTodo(t);
   }
 
   Future<void> deleteBatch(Set<int> ids) async {
-    if (ids.isEmpty) return;
-
-    await _isar.writeTxn(() async {
-      await _isar.todos.deleteAll(ids.toList());
-    });
+    for (final id in ids) {
+      await delete(id);
+    }
   }
 
   // ==================== WATCH ====================

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:zest/kodo/store.dart';
 import 'package:get/get.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
 import 'package:zest/app/data/db.dart';
@@ -14,7 +15,6 @@ import 'package:zest/app/constants/app_constants.dart';
 import 'package:zest/app/utils/navigation_helper.dart';
 import 'package:zest/app/utils/responsive_utils.dart';
 import 'package:zest/app/utils/scroll_fab_handler.dart';
-import 'package:zest/main.dart';
 
 class TaskTodos extends StatefulWidget {
   const TaskTodos({super.key, required this.task});
@@ -247,7 +247,7 @@ class _TaskTodosState extends State<TaskTodos>
   Future<void> _handleSortChanged(SortOption option) async {
     updateSortOption(option);
     widget.task.sortOption = option;
-    await isar.writeTxn(() => isar.tasks.put(widget.task));
+    await KodoStore.instance.group(widget.task);
   }
 
   Widget _buildTabBarView() {

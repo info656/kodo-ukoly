@@ -15,6 +15,18 @@ import java.io.FileOutputStream
 import java.io.OutputStream
 
 class MainActivity: FlutterActivity() {
+    private var shareChannel: MethodChannel? = null
+    private var pendingShare: Map<String,String>? = null
+    private var receiverReady = false
+    private fun receiveShare(intent: Intent?) {
+        if (intent?.action != Intent.ACTION_SEND || intent.type != "text/plain") return
+        val text=intent.getStringExtra(Intent.EXTRA_TEXT) ?: return
+        if (text.isBlank() || text.length > 15000) return
+        val payload=mapOf("text" to text,"title" to (intent.getStringExtra(Intent.EXTRA_SUBJECT) ?: "").take(200))
+        if(receiverReady) shareChannel?.invokeMethod("share",payload) else pendingShare=payload
+        intent.action = null
+    }
+    override fun onNewIntent(intent: Intent) { super.onNewIntent(intent); setIntent(intent); receiveShare(intent) }
     private val CHANNEL = "directory_picker"
     private val REQUEST_CODE = 1001
     private var result: MethodChannel.Result? = null
@@ -22,6 +34,13 @@ class MainActivity: FlutterActivity() {
 
     override fun configureFlutterEngine(@NonNull flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        shareChannel=MethodChannel(flutterEngine.dartExecutor.binaryMessenger,"cz.kodo.ukoly/share")
+        shareChannel?.setMethodCallHandler { call,result ->
+            if(call.method=="takePending") { receiverReady=true;result.success(pendingShare);pendingShare=null }
+            else if(call.method=="pauseReceiver"){receiverReady=false;result.success(null)}
+            else result.notImplemented()
+        }
+        receiveShare(intent)
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             when (call.method) {
                 "pickDirectory" -> {

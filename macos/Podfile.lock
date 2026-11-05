@@ -1,0 +1,22 @@
+PODS:
+  - FlutterMacOS (1.0.0)
+  - isar_community_flutter_libs (1.0.0):
+    - FlutterMacOS
+
+DEPENDENCIES:
+  - FlutterMacOS (from `Flutter/ephemeral`)
+  - isar_community_flutter_libs (from `Flutter/ephemeral/.symlinks/plugins/isar_community_flutter_libs/macos`)
+
+EXTERNAL SOURCES:
+  FlutterMacOS:
+    :path: Flutter/ephemeral
+  isar_community_flutter_libs:
+    :path: Flutter/ephemeral/.symlinks/plugins/isar_community_flutter_libs/macos
+
+SPEC CHECKSUMS:
+  FlutterMacOS: d0db08ddef1a9af05a5ec4b724367152bb0500b1
+  isar_community_flutter_libs: d3749f6775866378fc78328b10f1397a05fba673
+
+PODFILE CHECKSUM: 7ea94091761b499e0c705bed8ccc305efda9867b
+
+COCOAPODS: 1.16.2

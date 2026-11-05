@@ -3,12 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:archive/archive.dart';
-import 'package:file_selector/file_selector.dart';
 import 'package:intl/intl.dart';
 import 'package:isar_community/isar.dart';
-import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:restart_app/restart_app.dart';
 import 'package:zest/app/data/db.dart';
 import 'package:zest/app/constants/app_constants.dart';
 import 'package:zest/app/utils/show_snack_bar.dart';
@@ -19,9 +16,6 @@ class IsarController {
   static const String _backupPrefix = 'backup_zest_db_';
   static const String _backupExtension = '.isar';
   static const String _compressedExtension = '.gz';
-  static const String _tempFileName = 'temp.isar';
-  static const String _defaultDbName = 'default.isar';
-  static const String _backupBeforeRestorePrefix = 'backup_before_restore_';
 
   // ==================== Database ====================
 
@@ -156,97 +150,10 @@ class IsarController {
   // ==================== Restore ====================
 
   Future<void> restoreDB() async {
-    _showLoadingDialog('restoringBackup'.tr);
-
-    try {
-      final dbDirectory = await getApplicationSupportDirectory();
-      final backupFile = await openFile(
-        acceptedTypeGroups: [
-          XTypeGroup(
-            label: 'Isar Database',
-            extensions: [
-              _backupExtension.substring(1),
-              _compressedExtension.substring(1),
-            ],
-          ),
-        ],
-      );
-
-      if (backupFile == null) {
-        _hideLoadingDialog();
-        showSnackBar('errorPathRe'.tr, isInfo: true);
-        return;
-      }
-
-      final selectedFile = File(backupFile.path);
-
-      if (!await selectedFile.exists()) {
-        _hideLoadingDialog();
-        showSnackBar('errorPathRe'.tr, isInfo: true);
-        return;
-      }
-
-      final bytes = await selectedFile.readAsBytes();
-      final decompressedBytes = _tryDecompress(bytes);
-
-      if (decompressedBytes.isEmpty) {
-        _hideLoadingDialog();
-        showSnackBar('error'.tr, isError: true);
-        return;
-      }
-
-      await _performRestore(dbDirectory, decompressedBytes);
-
-      _hideLoadingDialog();
-      showSnackBar('successRestoreCategory'.tr);
-
-      await Future.delayed(
-        const Duration(milliseconds: 1500),
-        () => Restart.restartApp(),
-      );
-    } catch (e, stackTrace) {
-      _hideLoadingDialog();
-      debugPrint('Restore error: $e\n$stackTrace');
-      showSnackBar('error'.tr, isError: true);
-    }
-  }
-
-  Future<void> _performRestore(
-    Directory dbDirectory,
-    List<int> decompressedBytes,
-  ) async {
-    final tempIsarPath = p.join(dbDirectory.path, _tempFileName);
-    final tempFile = File(tempIsarPath);
-
-    final currentDbPath = p.join(dbDirectory.path, _defaultDbName);
-    final currentDbBackupPath = p.join(
-      dbDirectory.path,
-      '$_backupBeforeRestorePrefix${DateTime.now().millisecondsSinceEpoch}$_backupExtension',
+    showSnackBar(
+      "Úkoly se načítají ze serveru Kodo; místní import není zapnutý.",
+      isInfo: true,
     );
-
-    final currentDb = File(currentDbPath);
-    if (await currentDb.exists()) {
-      await currentDb.copy(currentDbBackupPath);
-    }
-
-    try {
-      await tempFile.writeAsBytes(decompressedBytes);
-      await isar.close();
-
-      if (await tempFile.exists()) {
-        await tempFile.copy(currentDbPath);
-        await tempFile.delete();
-
-        if (await File(currentDbBackupPath).exists()) {
-          await File(currentDbBackupPath).delete();
-        }
-      }
-    } catch (e) {
-      if (await File(currentDbBackupPath).exists()) {
-        await File(currentDbBackupPath).copy(currentDbPath);
-      }
-      rethrow;
-    }
   }
 
   // ==================== Helpers ====================
@@ -268,15 +175,6 @@ class IsarController {
     final compressedData = encoder.encode(bytes);
 
     await destination.writeAsBytes(compressedData);
-  }
-
-  List<int> _tryDecompress(List<int> bytes) {
-    try {
-      final decoder = GZipDecoder();
-      return decoder.decodeBytes(bytes);
-    } catch (_) {
-      return bytes;
-    }
   }
 
   // ==================== Directory Picker ====================

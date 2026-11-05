@@ -100,6 +100,7 @@ class TaskService {
     if (tasks.isEmpty) return;
 
     final tasksCopy = List<Tasks>.from(tasks);
+    if(tasksCopy.any((t)=>t.isSystem)) throw StateError("Inbox nelze odstranit.");
 
     for (final task in tasksCopy) {
       final todos = await _todoRepo.getByTaskId(task.id);

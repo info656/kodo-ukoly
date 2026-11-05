@@ -87,7 +87,10 @@ class TodoService {
   }
 
   Future<void> updateTodoStatus(Todos todo) async {
-    await _todoRepo.update(todo);
+    await _todoRepo.updateStatusWithSubtasks(
+      parentTodo: todo,
+      status: todo.status,
+    );
 
     final completedTime = todo.todoCompletedTime;
 

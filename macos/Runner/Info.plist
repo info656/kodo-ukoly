@@ -13,7 +13,9 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>$(PRODUCT_NAME)</string>
+	<string>Kodo Úkoly</string>
+	<key>CFBundleDisplayName</key>
+	<string>Kodo Úkoly</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
@@ -28,5 +30,6 @@
 	<string>MainMenu</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+<key>CFBundleURLTypes</key><array><dict><key>CFBundleURLName</key><string>cz.kodo.ukoly.share</string><key>CFBundleURLSchemes</key><array><string>kodoukoly</string></array></dict></array>
 </dict>
 </plist>

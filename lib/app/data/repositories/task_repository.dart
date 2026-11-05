@@ -1,8 +1,8 @@
-import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:isar_community/isar.dart';
 import 'package:zest/app/data/db.dart';
 import 'package:zest/main.dart';
+import 'package:zest/kodo/store.dart';
 
 class TaskRepository {
   final Isar _isar = isar;
@@ -15,15 +15,7 @@ class TaskRepository {
     required Color color,
     required int index,
   }) async {
-    final task = Tasks(
-      title: title,
-      description: description,
-      taskColor: color.value32bit,
-      index: index,
-    );
-
-    await _isar.writeTxn(() => _isar.tasks.put(task));
-    return task;
+    return KodoStore.instance.addGroup(title, description, color, index);
   }
 
   // ==================== READ ====================
@@ -43,61 +35,45 @@ class TaskRepository {
 
   // ==================== UPDATE ====================
 
-  Future<void> update(Tasks task) async {
-    await _isar.writeTxn(() => _isar.tasks.put(task));
-  }
-
+  Future<void> update(Tasks task) => KodoStore.instance.group(task);
   Future<void> updateFields({
     required Tasks task,
     required String title,
     required String description,
     required Color color,
   }) async {
-    await _isar.writeTxn(() async {
-      task.title = title;
-      task.description = description;
-      task.taskColor = color.value32bit;
-      await _isar.tasks.put(task);
-    });
+    task.title = title;
+    task.description = description;
+    task.taskColor = color.toARGB32();
+    await update(task);
   }
 
   Future<void> updateArchiveStatus(Tasks task, bool archived) async {
-    await _isar.writeTxn(() async {
-      task.archive = archived;
-      await _isar.tasks.put(task);
-    });
+    task.archive = archived;
+    await update(task);
   }
 
   Future<void> updateArchiveStatusBatch(
     List<Tasks> tasks,
     bool archived,
   ) async {
-    if (tasks.isEmpty) return;
-
-    await _isar.writeTxn(() async {
-      for (final task in tasks) {
-        task.archive = archived;
-      }
-      await _isar.tasks.putAll(tasks);
-    });
+    for (final task in tasks) {
+      await updateArchiveStatus(task, archived);
+    }
   }
 
   Future<void> updateIndexes(List<Tasks> tasks) async {
-    if (tasks.isEmpty) return;
-
-    await _isar.writeTxn(() async {
-      for (int i = 0; i < tasks.length; i++) {
-        tasks[i].index = i;
+    for (var i = 0; i < tasks.length; i++) {
+      final task = await getById(tasks[i].id);
+      if (task != null) {
+        task.index = i;
+        await update(task);
       }
-      await _isar.tasks.putAll(tasks);
-    });
+    }
   }
 
-  // ==================== DELETE ====================
-
-  Future<void> delete(Tasks task) async {
-    await _isar.writeTxn(() => _isar.tasks.delete(task.id));
-  }
+  Future<void> delete(Tasks task) =>
+      KodoStore.instance.group(task, hidden: true);
 
   // ==================== WATCH ====================
 

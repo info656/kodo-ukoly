@@ -1,5 +1,6 @@
 import 'package:flag_secure/flag_secure.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
 import 'package:iconsax_plus/iconsax_plus.dart';
@@ -266,6 +267,16 @@ class _SettingsPageState extends State<SettingsPage> {
       icon: IconsaxPlusBold.cloud,
       children: [
         SettingsTile(
+          leading: const Icon(Icons.logout),
+          title: 'Odhlásit se z Kodo',
+          onTap: () async {
+            await Supabase.instance.client.auth.signOut();
+            if (context.mounted) {
+              Navigator.of(context).popUntil((route) => route.isFirst);
+            }
+          },
+        ),
+        SettingsTile(
           leading: const Icon(IconsaxPlusLinear.cloud_plus),
           title: 'backup',
           onTap: isarController.createBackup,
@@ -370,7 +381,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     image: AssetImage('assets/icons/icon.png'),
                   ),
                 ),
-                applicationName: 'Zest',
+                applicationName: 'Kodo Úkoly',
                 applicationVersion: appVersion,
               ),
             );
@@ -379,7 +390,7 @@ class _SettingsPageState extends State<SettingsPage> {
         SettingsTile(
           leading: const Icon(LineAwesomeIcons.github),
           title: '${'project'.tr} GitHub',
-          onTap: () => _urlLauncher('https://github.com/darkmoonight/Zest'),
+          onTap: () => _urlLauncher('https://github.com/info656/kodo-ukoly'),
         ),
         SettingsTile(
           leading: const Icon(IconsaxPlusLinear.code_circle),
@@ -526,13 +537,10 @@ class _SettingsPageState extends State<SettingsPage> {
       isDestructive: true,
       confirmText: 'delete',
       onConfirm: () async {
-        await isar.writeTxn(() async {
-          await isar.todos.clear();
-          await isar.tasks.clear();
-          todoController.tasks.clear();
-          todoController.todos.clear();
-        });
-        showSnackBar('deleteAll'.tr);
+        showSnackBar(
+          'Sdílené úkoly mažte v jejich seznamu. Hromadné smazání databáze zde není zapnuté.',
+          isInfo: true,
+        );
       },
     );
   }

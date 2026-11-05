@@ -2960,18 +2960,28 @@ const TasksSchema = CollectionSchema(
     ),
     r'index': PropertySchema(id: 2, name: r'index', type: IsarType.long),
     r'isSystem': PropertySchema(id: 3, name: r'isSystem', type: IsarType.bool),
-    r'sortOption': PropertySchema(
+    r'remoteKey': PropertySchema(
       id: 4,
+      name: r'remoteKey',
+      type: IsarType.string,
+    ),
+    r'remoteVersion': PropertySchema(
+      id: 5,
+      name: r'remoteVersion',
+      type: IsarType.string,
+    ),
+    r'sortOption': PropertySchema(
+      id: 6,
       name: r'sortOption',
       type: IsarType.byte,
       enumMap: _TaskssortOptionEnumValueMap,
     ),
     r'taskColor': PropertySchema(
-      id: 5,
+      id: 7,
       name: r'taskColor',
       type: IsarType.long,
     ),
-    r'title': PropertySchema(id: 6, name: r'title', type: IsarType.string),
+    r'title': PropertySchema(id: 8, name: r'title', type: IsarType.string),
   },
 
   estimateSize: _tasksEstimateSize,
@@ -3004,6 +3014,18 @@ int _tasksEstimateSize(
 ) {
   var bytesCount = offsets.last;
   bytesCount += 3 + object.description.length * 3;
+  {
+    final value = object.remoteKey;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.remoteVersion;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.title.length * 3;
   return bytesCount;
 }
@@ -3018,9 +3040,11 @@ void _tasksSerialize(
   writer.writeString(offsets[1], object.description);
   writer.writeLong(offsets[2], object.index);
   writer.writeBool(offsets[3], object.isSystem);
-  writer.writeByte(offsets[4], object.sortOption.index);
-  writer.writeLong(offsets[5], object.taskColor);
-  writer.writeString(offsets[6], object.title);
+  writer.writeString(offsets[4], object.remoteKey);
+  writer.writeString(offsets[5], object.remoteVersion);
+  writer.writeByte(offsets[6], object.sortOption.index);
+  writer.writeLong(offsets[7], object.taskColor);
+  writer.writeString(offsets[8], object.title);
 }
 
 Tasks _tasksDeserialize(
@@ -3036,11 +3060,13 @@ Tasks _tasksDeserialize(
     index: reader.readLongOrNull(offsets[2]),
     isSystem: reader.readBoolOrNull(offsets[3]) ?? false,
     sortOption:
-        _TaskssortOptionValueEnumMap[reader.readByteOrNull(offsets[4])] ??
+        _TaskssortOptionValueEnumMap[reader.readByteOrNull(offsets[6])] ??
         SortOption.none,
-    taskColor: reader.readLong(offsets[5]),
-    title: reader.readString(offsets[6]),
+    taskColor: reader.readLong(offsets[7]),
+    title: reader.readString(offsets[8]),
   );
+  object.remoteKey = reader.readStringOrNull(offsets[4]);
+  object.remoteVersion = reader.readStringOrNull(offsets[5]);
   return object;
 }
 
@@ -3060,12 +3086,16 @@ P _tasksDeserializeProp<P>(
     case 3:
       return (reader.readBoolOrNull(offset) ?? false) as P;
     case 4:
+      return (reader.readStringOrNull(offset)) as P;
+    case 5:
+      return (reader.readStringOrNull(offset)) as P;
+    case 6:
       return (_TaskssortOptionValueEnumMap[reader.readByteOrNull(offset)] ??
               SortOption.none)
           as P;
-    case 5:
+    case 7:
       return (reader.readLong(offset)) as P;
-    case 6:
+    case 8:
       return (reader.readString(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -3483,6 +3513,330 @@ extension TasksQueryFilter on QueryBuilder<Tasks, Tasks, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'remoteKey'),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'remoteKey'),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'remoteKey',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'remoteKey',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'remoteKey', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteKeyIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'remoteKey', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'remoteVersion'),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'remoteVersion'),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'remoteVersion',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'remoteVersion',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'remoteVersion', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterFilterCondition> remoteVersionIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'remoteVersion', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<Tasks, Tasks, QAfterFilterCondition> sortOptionEqualTo(
     SortOption value,
   ) {
@@ -3864,6 +4218,30 @@ extension TasksQuerySortBy on QueryBuilder<Tasks, Tasks, QSortBy> {
     });
   }
 
+  QueryBuilder<Tasks, Tasks, QAfterSortBy> sortByRemoteKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterSortBy> sortByRemoteKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteKey', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterSortBy> sortByRemoteVersion() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteVersion', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterSortBy> sortByRemoteVersionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteVersion', Sort.desc);
+    });
+  }
+
   QueryBuilder<Tasks, Tasks, QAfterSortBy> sortBySortOption() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortOption', Sort.asc);
@@ -3962,6 +4340,30 @@ extension TasksQuerySortThenBy on QueryBuilder<Tasks, Tasks, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Tasks, Tasks, QAfterSortBy> thenByRemoteKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterSortBy> thenByRemoteKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteKey', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterSortBy> thenByRemoteVersion() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteVersion', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QAfterSortBy> thenByRemoteVersionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteVersion', Sort.desc);
+    });
+  }
+
   QueryBuilder<Tasks, Tasks, QAfterSortBy> thenBySortOption() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'sortOption', Sort.asc);
@@ -4026,6 +4428,25 @@ extension TasksQueryWhereDistinct on QueryBuilder<Tasks, Tasks, QDistinct> {
     });
   }
 
+  QueryBuilder<Tasks, Tasks, QDistinct> distinctByRemoteKey({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'remoteKey', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Tasks, Tasks, QDistinct> distinctByRemoteVersion({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'remoteVersion',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
   QueryBuilder<Tasks, Tasks, QDistinct> distinctBySortOption() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'sortOption');
@@ -4075,6 +4496,18 @@ extension TasksQueryProperty on QueryBuilder<Tasks, Tasks, QQueryProperty> {
   QueryBuilder<Tasks, bool, QQueryOperations> isSystemProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'isSystem');
+    });
+  }
+
+  QueryBuilder<Tasks, String?, QQueryOperations> remoteKeyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'remoteKey');
+    });
+  }
+
+  QueryBuilder<Tasks, String?, QQueryOperations> remoteVersionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'remoteVersion');
     });
   }
 
@@ -4134,20 +4567,30 @@ const TodosSchema = CollectionSchema(
       type: IsarType.byte,
       enumMap: _TodospriorityEnumValueMap,
     ),
-    r'status': PropertySchema(
+    r'remoteKey': PropertySchema(
       id: 8,
+      name: r'remoteKey',
+      type: IsarType.string,
+    ),
+    r'remoteVersion': PropertySchema(
+      id: 9,
+      name: r'remoteVersion',
+      type: IsarType.string,
+    ),
+    r'status': PropertySchema(
+      id: 10,
       name: r'status',
       type: IsarType.byte,
       enumMap: _TodosstatusEnumValueMap,
     ),
-    r'tags': PropertySchema(id: 9, name: r'tags', type: IsarType.stringList),
+    r'tags': PropertySchema(id: 11, name: r'tags', type: IsarType.stringList),
     r'todoCompletedTime': PropertySchema(
-      id: 10,
+      id: 12,
       name: r'todoCompletedTime',
       type: IsarType.dateTime,
     ),
     r'todoCompletionTime': PropertySchema(
-      id: 11,
+      id: 13,
       name: r'todoCompletionTime',
       type: IsarType.dateTime,
     ),
@@ -4196,6 +4639,18 @@ int _todosEstimateSize(
   var bytesCount = offsets.last;
   bytesCount += 3 + object.description.length * 3;
   bytesCount += 3 + object.name.length * 3;
+  {
+    final value = object.remoteKey;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
+  {
+    final value = object.remoteVersion;
+    if (value != null) {
+      bytesCount += 3 + value.length * 3;
+    }
+  }
   bytesCount += 3 + object.tags.length * 3;
   {
     for (var i = 0; i < object.tags.length; i++) {
@@ -4220,10 +4675,12 @@ void _todosSerialize(
   writer.writeLong(offsets[5], object.index);
   writer.writeString(offsets[6], object.name);
   writer.writeByte(offsets[7], object.priority.index);
-  writer.writeByte(offsets[8], object.status.index);
-  writer.writeStringList(offsets[9], object.tags);
-  writer.writeDateTime(offsets[10], object.todoCompletedTime);
-  writer.writeDateTime(offsets[11], object.todoCompletionTime);
+  writer.writeString(offsets[8], object.remoteKey);
+  writer.writeString(offsets[9], object.remoteVersion);
+  writer.writeByte(offsets[10], object.status.index);
+  writer.writeStringList(offsets[11], object.tags);
+  writer.writeDateTime(offsets[12], object.todoCompletedTime);
+  writer.writeDateTime(offsets[13], object.todoCompletionTime);
 }
 
 Todos _todosDeserialize(
@@ -4244,15 +4701,17 @@ Todos _todosDeserialize(
         _TodospriorityValueEnumMap[reader.readByteOrNull(offsets[7])] ??
         Priority.none,
     status:
-        _TodosstatusValueEnumMap[reader.readByteOrNull(offsets[8])] ??
+        _TodosstatusValueEnumMap[reader.readByteOrNull(offsets[10])] ??
         TodoStatus.active,
-    tags: reader.readStringList(offsets[9]) ?? const [],
-    todoCompletedTime: reader.readDateTimeOrNull(offsets[10]),
-    todoCompletionTime: reader.readDateTimeOrNull(offsets[11]),
+    tags: reader.readStringList(offsets[11]) ?? const [],
+    todoCompletedTime: reader.readDateTimeOrNull(offsets[12]),
+    todoCompletionTime: reader.readDateTimeOrNull(offsets[13]),
   );
   object.childrenSortOption =
       _TodoschildrenSortOptionValueEnumMap[reader.readByteOrNull(offsets[0])] ??
       SortOption.none;
+  object.remoteKey = reader.readStringOrNull(offsets[8]);
+  object.remoteVersion = reader.readStringOrNull(offsets[9]);
   return object;
 }
 
@@ -4286,14 +4745,18 @@ P _todosDeserializeProp<P>(
               Priority.none)
           as P;
     case 8:
+      return (reader.readStringOrNull(offset)) as P;
+    case 9:
+      return (reader.readStringOrNull(offset)) as P;
+    case 10:
       return (_TodosstatusValueEnumMap[reader.readByteOrNull(offset)] ??
               TodoStatus.active)
           as P;
-    case 9:
-      return (reader.readStringList(offset) ?? const []) as P;
-    case 10:
-      return (reader.readDateTimeOrNull(offset)) as P;
     case 11:
+      return (reader.readStringList(offset) ?? const []) as P;
+    case 12:
+      return (reader.readDateTimeOrNull(offset)) as P;
+    case 13:
       return (reader.readDateTimeOrNull(offset)) as P;
     default:
       throw IsarError('Unknown property with id $propertyId');
@@ -5050,6 +5513,330 @@ extension TodosQueryFilter on QueryBuilder<Todos, Todos, QFilterCondition> {
     });
   }
 
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'remoteKey'),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'remoteKey'),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'remoteKey',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'remoteKey',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'remoteKey',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'remoteKey', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteKeyIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'remoteKey', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionIsNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNull(property: r'remoteVersion'),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionIsNotNull() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        const FilterCondition.isNotNull(property: r'remoteVersion'),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionEqualTo(
+    String? value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionGreaterThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(
+          include: include,
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionLessThan(
+    String? value, {
+    bool include = false,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.lessThan(
+          include: include,
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionBetween(
+    String? lower,
+    String? upper, {
+    bool includeLower = true,
+    bool includeUpper = true,
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.between(
+          property: r'remoteVersion',
+          lower: lower,
+          includeLower: includeLower,
+          upper: upper,
+          includeUpper: includeUpper,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionStartsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.startsWith(
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionEndsWith(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.endsWith(
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionContains(
+    String value, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.contains(
+          property: r'remoteVersion',
+          value: value,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionMatches(
+    String pattern, {
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.matches(
+          property: r'remoteVersion',
+          wildcard: pattern,
+          caseSensitive: caseSensitive,
+        ),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionIsEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.equalTo(property: r'remoteVersion', value: ''),
+      );
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterFilterCondition> remoteVersionIsNotEmpty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addFilterCondition(
+        FilterCondition.greaterThan(property: r'remoteVersion', value: ''),
+      );
+    });
+  }
+
   QueryBuilder<Todos, Todos, QAfterFilterCondition> statusEqualTo(
     TodoStatus value,
   ) {
@@ -5649,6 +6436,30 @@ extension TodosQuerySortBy on QueryBuilder<Todos, Todos, QSortBy> {
     });
   }
 
+  QueryBuilder<Todos, Todos, QAfterSortBy> sortByRemoteKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterSortBy> sortByRemoteKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteKey', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterSortBy> sortByRemoteVersion() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteVersion', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterSortBy> sortByRemoteVersionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteVersion', Sort.desc);
+    });
+  }
+
   QueryBuilder<Todos, Todos, QAfterSortBy> sortByStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'status', Sort.asc);
@@ -5795,6 +6606,30 @@ extension TodosQuerySortThenBy on QueryBuilder<Todos, Todos, QSortThenBy> {
     });
   }
 
+  QueryBuilder<Todos, Todos, QAfterSortBy> thenByRemoteKey() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteKey', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterSortBy> thenByRemoteKeyDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteKey', Sort.desc);
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterSortBy> thenByRemoteVersion() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteVersion', Sort.asc);
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QAfterSortBy> thenByRemoteVersionDesc() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addSortBy(r'remoteVersion', Sort.desc);
+    });
+  }
+
   QueryBuilder<Todos, Todos, QAfterSortBy> thenByStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addSortBy(r'status', Sort.asc);
@@ -5885,6 +6720,25 @@ extension TodosQueryWhereDistinct on QueryBuilder<Todos, Todos, QDistinct> {
     });
   }
 
+  QueryBuilder<Todos, Todos, QDistinct> distinctByRemoteKey({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(r'remoteKey', caseSensitive: caseSensitive);
+    });
+  }
+
+  QueryBuilder<Todos, Todos, QDistinct> distinctByRemoteVersion({
+    bool caseSensitive = true,
+  }) {
+    return QueryBuilder.apply(this, (query) {
+      return query.addDistinctBy(
+        r'remoteVersion',
+        caseSensitive: caseSensitive,
+      );
+    });
+  }
+
   QueryBuilder<Todos, Todos, QDistinct> distinctByStatus() {
     return QueryBuilder.apply(this, (query) {
       return query.addDistinctBy(r'status');
@@ -5963,6 +6817,18 @@ extension TodosQueryProperty on QueryBuilder<Todos, Todos, QQueryProperty> {
   QueryBuilder<Todos, Priority, QQueryOperations> priorityProperty() {
     return QueryBuilder.apply(this, (query) {
       return query.addPropertyName(r'priority');
+    });
+  }
+
+  QueryBuilder<Todos, String?, QQueryOperations> remoteKeyProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'remoteKey');
+    });
+  }
+
+  QueryBuilder<Todos, String?, QQueryOperations> remoteVersionProperty() {
+    return QueryBuilder.apply(this, (query) {
+      return query.addPropertyName(r'remoteVersion');
     });
   }
 
