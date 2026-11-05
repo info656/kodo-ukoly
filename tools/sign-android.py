@@ -42,7 +42,7 @@ if args.apk:
     args.output.parent.mkdir(parents=True, exist_ok=True)
     subprocess.run([
         str(java), '-jar', str(args.apksigner), 'sign', '--ks', str(key),
-        '--ks-pass', 'file:' + str(password), '--key-pass', 'file:' + str(password),
+        '--ks-pass', 'file:' + str(password),
         '--ks-key-alias', 'kodo-ukoly', '--out', str(args.output), str(args.apk),
     ], check=True)
     subprocess.run([

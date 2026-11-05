@@ -5,7 +5,7 @@ const {PGlite}=await import(process.env.PGLITE_MODULE||'@electric-sql/pglite');
 const db=new PGlite();let checks=0;
 await db.exec(await readFile(new URL('./database-fixture.sql',import.meta.url),'utf8'));
 await db.exec(await readFile(process.env.EXISTING_TASK_RPCS||new URL('./existing-task-rpcs.sql',import.meta.url),'utf8'));
-await db.exec(await readFile(new URL('../supabase/migrations/20261105110000_kodo_tasks_app.sql',import.meta.url),'utf8'));
+await db.exec(await readFile(new URL('../supabase/migrations/20261105103512_kodo_tasks_app.sql',import.meta.url),'utf8'));
 const one=async(q,p=[])=>(await db.query(q,p)).rows[0];
 const call=async(action,key,version,payload)=> (await one('select kodo_tasks_app_write($1,$2,$3,$4) r',[action,key,version,JSON.stringify(payload)])).r;
 const read=async()=>(await one('select kodo_tasks_app_read() r')).r;
