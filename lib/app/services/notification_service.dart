@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'package:zest/app/data/db.dart';
 import 'package:zest/app/utils/notification.dart';
 import 'package:zest/main.dart';
+import 'package:zest/kodo/store.dart';
+import 'package:zest/kodo/reminder.dart';
 
 class NotificationService {
   final _notificationShow = NotificationShow();
@@ -9,6 +11,11 @@ class NotificationService {
   // ==================== SCHEDULE ====================
 
   Future<void> scheduleForTodo(Todos todo) async {
+    if (todo.status != TodoStatus.active ||
+        !usesDeviceReminder(KodoStore.instance.meta(todo.remoteKey))) {
+      await cancel(todo.id);
+      return;
+    }
     final completedTime = todo.todoCompletedTime;
 
     if (completedTime == null) {

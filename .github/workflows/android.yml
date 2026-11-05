@@ -43,7 +43,7 @@ jobs:
           flutter analyze --no-pub --no-fatal-infos
           flutter test
       - name: Build unsigned release APK
-        run: flutter build apk --release --dart-define-from-file=.local/build-config.json --build-name=0.1.0 --build-number=1
+        run: flutter build apk --release --dart-define-from-file=.local/build-config.json --build-name=0.1.1 --build-number=2
       - name: Collect Android package
         run: |
           mkdir -p android-artifact

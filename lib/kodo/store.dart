@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:zest/kodo/reminder.dart';
 import 'package:flutter/material.dart';
 import 'package:isar_community/isar.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -77,7 +78,9 @@ class KodoStore {
             prior ??
             Todos(
               name: row['title'] as String,
-              createdTime: DateTime.parse(row['created_at'] as String),
+              createdTime: DateTime.parse(
+                row['created_at'] as String,
+              ).toLocal(),
             );
         todo.remoteKey = key;
         todo.remoteVersion = row['version'] as String;
@@ -87,13 +90,15 @@ class KodoStore {
             : row['body'] as String;
         todo.todoCompletionTime = DateTime.tryParse(
           row['completed_at'] as String? ?? '',
-        );
+        )?.toLocal();
         todo.status = row['completed_at'] == null
             ? TodoStatus.active
             : m['status'] == 'cancelled'
             ? TodoStatus.cancelled
             : TodoStatus.done;
-        todo.todoCompletedTime = DateTime.tryParse(m['due'] as String? ?? '');
+        todo.todoCompletedTime = DateTime.tryParse(
+          m['due'] as String? ?? '',
+        )?.toLocal();
         todo.fix = m['pinned'] == true;
         todo.priority =
             Priority.values.where((p) => p.name == m['priority']).firstOrNull ??
@@ -139,13 +144,27 @@ class KodoStore {
     files
       ..clear()
       ..addAll(newFiles);
+    // A portal date is notified server-side. Cancel stale native alarms after
+    // the next sync; title edits must not create a duplicate local reminder.
+    for (final todo in [
+      ...todos.values,
+      ...oldItems.where((t) => !todos.containsKey(t.remoteKey)),
+    ]) {
+      if (!todos.containsKey(todo.remoteKey) ||
+          todo.status != TodoStatus.active ||
+          todo.todoCompletedTime == null ||
+          !usesDeviceReminder(newMeta[todo.remoteKey] ?? {})) {
+        try {
+          await flutterLocalNotificationsPlugin?.cancel(id: todo.id);
+        } catch (_) {}
+      }
+    }
     if (epoch == _epoch) ready = true;
   }
 
   Map<String, dynamic> meta(String? key) => Map.of(_meta[key] ?? {});
   Map<String, dynamic> todoMeta(Todos t) => {
-    ...meta(t.remoteKey),
-    'due': t.todoCompletedTime?.toUtc().toIso8601String(),
+    ...reminderMetadata(meta(t.remoteKey), t.todoCompletedTime),
     'pinned': t.fix,
     'priority': t.priority.name,
     'tags': t.tags,
@@ -307,6 +326,9 @@ class KodoStore {
     ready = false;
     try {
       await _refresh;
+    } catch (_) {}
+    try {
+      await flutterLocalNotificationsPlugin?.cancelAll();
     } catch (_) {}
     files.clear();
     _meta.clear();
